@@ -2,10 +2,32 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  constructor(private db: DbService) {}
+  constructor(
+    private config: ConfigService,
+    private db: DbService,
+    private jwt: JwtService,
+  ) {}
+
+  private async signToken(
+    userId: number,
+    email: string,
+  ): Promise<{ token: string }> {
+    const payload = { sub: userId, email };
+
+    const token = this.jwt.sign(payload, {
+      expiresIn: '1d',
+      secret: this.config.get('JWT_SECRET'),
+    });
+
+    return {
+      token,
+    };
+  }
 
   async signUp(dto: AuthDto) {
     // Check if the user already exists
@@ -28,13 +50,8 @@ export class AuthService {
       },
     });
 
-    // Delete the password hash
-    delete user.passwordHash;
-
-    // Return the user
-    return {
-      data: user,
-    };
+    // Return the token
+    return await this.signToken(user.id, user.email);
   }
 
   async signIn(dto: AuthDto) {
@@ -52,12 +69,7 @@ export class AuthService {
     const passwordCorrect = await argon.verify(user.passwordHash, dto.password);
     if (!passwordCorrect) throw new ForbiddenException('Invalid credentials');
 
-    // Delete the password hash
-    delete user.passwordHash;
-
-    // Return the user
-    return {
-      data: user,
-    };
+    // Return the token
+    return await this.signToken(user.id, user.email);
   }
 }
