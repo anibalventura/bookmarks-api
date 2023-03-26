@@ -1,9 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import * as pactum from 'pactum';
 import { AppModule } from '../src/app.module';
 import { DbService } from '../src/db/db.service';
+import { AuthDto } from '../src/auth/dto';
 
 describe('App e2e', () => {
+  const port = 3333;
+  const url = `http://localhost:${port}`;
   let app: INestApplication;
   let db: DbService;
 
@@ -25,6 +29,7 @@ describe('App e2e', () => {
 
     // Start the application
     await app.init();
+    await app.listen(port);
 
     // Get the DbService instance
     db = app.get(DbService);
@@ -38,5 +43,83 @@ describe('App e2e', () => {
     await app.close();
   });
 
-  it.todo('should pass');
+  describe('Auth', () => {
+    const dto: AuthDto = {
+      email: 'anibal@email.com',
+      password: '1234567',
+    };
+
+    describe('Signup', () => {
+      const baseUrl = `${url}/auth/sign-up`;
+
+      it('should throw if email empty', () => {
+        return pactum
+          .spec()
+          .post(baseUrl)
+          .withBody({
+            password: dto.password,
+          })
+          .expectStatus(400);
+      });
+
+      it('should throw if password empty', () => {
+        return pactum
+          .spec()
+          .post(baseUrl)
+          .withBody({
+            email: dto.email,
+          })
+          .expectStatus(400);
+      });
+
+      it('should throw if no body provided', () => {
+        return pactum.spec().post(baseUrl).expectStatus(400);
+      });
+
+      it('should signup', () => {
+        return pactum.spec().post(baseUrl).withBody(dto).expectStatus(201);
+      });
+    });
+
+    describe('Signin', () => {
+      const baseUrl = `${url}/auth/sign-in`;
+
+      it('should throw if email empty', () => {
+        return pactum
+          .spec()
+          .post(baseUrl)
+          .withBody({
+            password: dto.password,
+          })
+          .expectStatus(400);
+      });
+
+      it('should throw if password empty', () => {
+        return pactum
+          .spec()
+          .post(baseUrl)
+          .withBody({
+            email: dto.email,
+          })
+          .expectStatus(400);
+      });
+
+      it('should throw if no body provided', () => {
+        return pactum.spec().post(baseUrl).expectStatus(400);
+      });
+
+      it('should signin', () => {
+        return pactum
+          .spec()
+          .post(baseUrl)
+          .withBody(dto)
+          .expectStatus(200)
+          .stores('userAt', 'access_token');
+      });
+    });
+  });
+
+  describe('User', () => {});
+
+  describe('Bookmark', () => {});
 });
