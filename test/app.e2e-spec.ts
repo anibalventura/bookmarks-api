@@ -36,6 +36,9 @@ describe('App e2e', () => {
 
     // Clear the database
     await db.cleanDb();
+
+    // Set the pactum spec base url
+    pactum.request.setBaseUrl(url);
   });
 
   afterAll(async () => {
@@ -43,14 +46,14 @@ describe('App e2e', () => {
     await app.close();
   });
 
-  describe('Auth', () => {
+  describe('- Auth', () => {
     const dto: AuthDto = {
       email: 'anibal@email.com',
       password: '1234567',
     };
 
-    describe('Signup', () => {
-      const baseUrl = `${url}/auth/sign-up`;
+    describe('- Signup', () => {
+      const baseUrl = '/auth/sign-up';
 
       it('should throw if email empty', () => {
         return pactum
@@ -81,8 +84,8 @@ describe('App e2e', () => {
       });
     });
 
-    describe('Signin', () => {
-      const baseUrl = `${url}/auth/sign-in`;
+    describe('- Signin', () => {
+      const baseUrl = '/auth/sign-in';
 
       it('should throw if email empty', () => {
         return pactum
@@ -114,12 +117,44 @@ describe('App e2e', () => {
           .post(baseUrl)
           .withBody(dto)
           .expectStatus(200)
-          .stores('userAt', 'access_token');
+          .stores('userAt', 'token');
       });
     });
   });
 
-  describe('User', () => {});
+  describe('- User', () => {
+    describe('Get me', () => {
+      it('should get current user', () => {
+        return pactum
+          .spec()
+          .get('/users/me')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .expectStatus(200);
+      });
+    });
 
-  describe('Bookmark', () => {});
+    describe('Edit user', () => {
+      it.todo('should edit current user');
+    });
+  });
+
+  describe('- Bookmark', () => {
+    describe('- Create bookmark', () => {
+      it.todo('should create bookmark');
+    });
+    describe('- Get bookmarks', () => {
+      it.todo('should get bookmarks');
+    });
+    describe('- Get bookmark by id', () => {
+      it.todo('should get bookmark by id');
+    });
+    describe('- Edit bookmark by id', () => {
+      it.todo('should edit bookmark by id');
+    });
+    describe('- Delete bookmark by id', () => {
+      it.todo('should delete bookmark by id');
+    });
+  });
 });
