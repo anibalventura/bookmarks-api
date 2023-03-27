@@ -4,6 +4,7 @@ import * as pactum from 'pactum';
 import { AppModule } from '../src/app.module';
 import { DbService } from '../src/db/db.service';
 import { AuthDto } from '../src/auth/dto';
+import { EditUserDto } from '../src/user/dto';
 
 describe('App e2e', () => {
   const port = 3333;
@@ -136,7 +137,23 @@ describe('App e2e', () => {
     });
 
     describe('Edit user', () => {
-      it.todo('should edit current user');
+      const dto: EditUserDto = {
+        firstName: 'Anibal',
+        email: 'anibal@email.com',
+      };
+
+      it('should edit user', () => {
+        return pactum
+          .spec()
+          .patch('/users/me')
+          .withHeaders({
+            Authorization: 'Bearer $S{userAt}',
+          })
+          .withBody(dto)
+          .expectStatus(200)
+          .expectBodyContains(dto.firstName)
+          .expectBodyContains(dto.email);
+      });
     });
   });
 
